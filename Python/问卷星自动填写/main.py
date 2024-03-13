@@ -15,7 +15,6 @@ content = {
 }
 
 
-
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -32,7 +31,7 @@ def FillElement(qa_tmp) :
         return
     
     # 填空题
-    for question, answer in content:
+    for question, answer in content.items():
         if question in qa_title:
             try:
                 input = qa_tmp.find_element(By.TAG_NAME, "input")
@@ -56,12 +55,6 @@ def FillElement(qa_tmp) :
         return
 
 
-
-
-
-
-
-
 if __name__ == '__main__':
     # 绕过问卷星的智能检测, 将webdriver属性设置为undefined
     option = Options()
@@ -74,6 +67,20 @@ if __name__ == '__main__':
 
     # 打开问卷星的网页
     web.get(url)
+    while True:
+        try:
+            # 含有id为divstarttime的元素, 说明问卷还未开始
+            web.find_element(By.ID, "divStartTimeTip")
+            print("未开始填写问卷, 等待中")
+            sleep(0.5)
+        except NoSuchElementException:
+            # 问卷已经开始
+            print("开始填写问卷")
+            sleep(0.1)
+            web.refresh()
+            break
+                
+            
 
     # 填写问卷
     for i in range(1,10):
@@ -82,11 +89,12 @@ if __name__ == '__main__':
             FillElement(qa_tmp)
         except NoSuchElementException:
             continue
-
+    
     # 点击提交按钮
     print("答案填写完成, 点击提交按钮")
     submit = web.find_element(By.ID, "ctlNext").click()
-    sleep(10)
+    sleep(5)
+    web.close()
     print("提交成功")
 
     
