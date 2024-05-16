@@ -5,7 +5,6 @@
 '''
 
 import random
-import math
 
 class Genetic:
     def __init__(self, nums:list, individual_count:int,  mutation_prob:float):
@@ -29,10 +28,11 @@ class Genetic:
 
     def target_function(self, result:list) -> float:
         '''计算目标函数的取值, 需要尽可能让目标函数的取值变大
+        目标函数要保证非负, 因为后续需要通过目标函数确定抽取概率
         :param result: 可能的一个解
         '''
         value = abs(sum(result) - self.total_value/10)
-        return -value
+        return 1/value
     
     def select_one_individual_by_posibility(self, posibility_list:list) -> int:
         '''根据概率表, 选择一个个体
@@ -89,12 +89,12 @@ class Genetic:
 
 if __name__ == '__main__':
     nums = random.sample(range(0, 1000), 50)
-    solution = Genetic(nums, 10, 0.01)
+    solution = Genetic(nums, 1000, 0.01)
     for i in range(100):
         print(f"epoch: {i}")
         solution.reproduce_one_generation()
         index, individual, value = solution.get_best_individual()
-        print(f"best: {index}", individual, f"({value:.4f})")
+        print(f"best: {index}", individual, f"({1/value:.0f})")
 
 
     
