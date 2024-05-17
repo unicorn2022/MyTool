@@ -5,9 +5,10 @@ from MyGeneticAlgorithm import GeneticAlgorithm
 if __name__ == '__main__':
     file = open("config.json", "r")
     config = json.load(file)
+    file.close()
 
     Genetic_Algorithm_Config = config["Genetic_Algorithm_Config"]
-    solution = GeneticAlgorithm(Genetic_Algorithm_Config["gene_count"], Genetic_Algorithm_Config["individual_count"], Genetic_Algorithm_Config["mutation_prob"])
+    solution = GeneticAlgorithm(Genetic_Algorithm_Config["individual_count"], Genetic_Algorithm_Config["mutation_prob"])
     epochs = Genetic_Algorithm_Config["epochs"]
     process_bar = tqdm(range(epochs))
     for epoch in process_bar:

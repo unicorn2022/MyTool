@@ -1,15 +1,14 @@
 from MyIndividual import Individual
 
 class GeneticAlgorithm:
-    def __init__(self, gene_count:int, individual_count:int, mutation_prob:float):
+    def __init__(self, individual_count:int, mutation_prob:float):
         '''遗传算法模板
-        :param gene_count: 每个个体含有的基因数目
         :param individual_count: 种群个体数目
         :param mutation_prob: 基因突变概率
         '''
         # 创建初始解集
         self.individual_count = individual_count
-        self.individual_list = [Individual(gene_count=gene_count, mutation_prob=mutation_prob) for _ in range(self.individual_count)]
+        self.individual_list = [Individual(mutation_prob=mutation_prob) for _ in range(self.individual_count)]
         self.mutation_prob = mutation_prob
         return
 
