@@ -1,25 +1,28 @@
 {
     "Map_Config": {
-        "width" : 10,
-        "height": 10
+        "width" : 100,
+        "height": 100,
+        "rand_weight": false,
+        "safe_distance": 1
     },
 
     "UAV_Config":{
-        "num": 3,
+        "num": 4,
         "search_time": 10,
-        "search_cost":  [1, 2, 3],
-        "search_radius": [2, 3, 4],
+        "search_cost":  [1, 2, 3, 4],
+        "search_radius": [1, 2, 3, 4],
         "start_position": [
             [0, 0],
-            [1, 2],
-            [3, 5]
+            [0, 99],
+            [99, 0],
+            [99, 99]
         ]
     },
 
 
     "Genetic_Algorithm_Config" : {
         "epochs" : 100,
-        "individual_count" : 100,
+        "individual_count" : 20,
         "mutation_prob" : 0.01
     }
 }

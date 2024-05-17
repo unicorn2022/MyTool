@@ -12,8 +12,13 @@ file.close()
 '''创建地图'''
 map_width = map_config["width"]
 map_height = map_config["height"]
+if map_config["rand_weight"] == True:
+    map_weight = np.random.random((map_width, map_height))
+else:
+    map_weight = np.ones((map_width, map_height))
+safe_distance = map_config["safe_distance"]
 '''无人机属性'''
-choice = [1, 0, -1] # 1左转, 0前进, -1右转
+choice = [0, 1, 2, 3] # 0左转, 1前进, 2右转, 3后退
 UAV_num = UAV_config["num"]
 UAV_search_time = UAV_config["search_time"]
 UAV_search_cost = UAV_config["search_cost"]
@@ -32,7 +37,16 @@ class Gene:
         return
     
     def __str__(self) -> str:
-        return f"{self.data:2d}, "
+        if self.data == 0:
+            return "L"
+        elif self.data == 1:
+            return "U"
+        elif self.data == 2:
+            return "R"
+        elif self.data == 3:
+            return "D"
+        else:
+            return "ERROR"
 
     def mutation(self):
         '''基因突变'''
@@ -83,13 +97,12 @@ class Individual:
         return
 
     def __str__(self) -> str:
-        res = "["
+        res = f"fit: {self.fittness:4.3f} "
         for UAV_index in range(UAV_num):
-            res += "["
+            res += f"[({UAV_start_position[UAV_index][0]}, {UAV_start_position[UAV_index][1]})"
             for i in range(self.gene_start_index[UAV_index], self.gene_start_index[UAV_index + 1]):
                 res += self.genotype[i].__str__()
             res += "], "
-        res += f"], fit: {self.fittness:4.3f}"
         return res
 
     def mutation(self):
@@ -100,58 +113,67 @@ class Individual:
         self.genotype[index].mutation()
         return
       
-    def calc_fittness(self):
+    def calc_fittness(self, debug=False):
         '''计算个体适应性, 适应性保证非负, 且适应性越高, 个体越不容易被淘汰'''
         positions = np.array(UAV_start_position, dtype=int) # 无人机当前位置
         timer = np.array(UAV_search_cost, dtype=int)        # 无人机当前飞行倒计时
         step = np.zeros(UAV_num, dtype=int)                 # 无人机当前飞了多少步
-        map = np.zeros((map_width, map_height), dtype=int)  # 地图, 记录当前位置是否被搜索到
+        map_vist = np.zeros((map_width, map_height), dtype=int)  # 地图, 记录当前位置是否被搜索到
 
-        def update_map():
+        def update_map(time):
             '''
             更新地图
             :return 当前被探索过的区域权重和
             '''
-            # 判断是否有无人机在同一格
+            # 判断是否有无人机相撞
             for i in range(UAV_num):
                 # 位置是否合法
                 if positions[i][0] < 0 or positions[i][0] >= map_width:
-                    return -1e10
+                    return time - UAV_search_time
                 if positions[i][1] < 0 or positions[i][1] >= map_height:
-                    return -1e10
+                    return time - UAV_search_time
                 # 是否与其他无人机相撞
                 for j in range(i):
-                    if positions[i][0] == positions[j][0] and positions[i][1] == positions[j][1]:
-                        return -1e10
+                    if math.dist(positions[i], positions[j]) < safe_distance:
+                        return time - UAV_search_time
             
             # 更新地图
-            count = 0
-            for i in range(map_width):
-                for j in range(map_height):
-                    for UAV_index in range(UAV_num):
-                        if math.dist([i, j], positions[UAV_index]) < UAV_search_radius[UAV_index]:
-                            map[i][j] = 1
-                            break
-                    count += map[i][j]
-            return count
+            for index in range(UAV_num):
+                position = positions[index]
+                search_radius = UAV_search_radius[index]
+                for i in range(max(0, position[0] - search_radius), min(map_width, position[0] + search_radius)):
+                    for j in range(max(0, position[1] - search_radius), min(map_width, position[1] + search_radius)):
+                        if math.dist([i, j], position) <= search_radius:
+                            map_vist[i][j] = 1
+            return sum(sum(map_vist * map_weight))
 
-        self.fittness = update_map()
+        self.fittness = update_map(0)
         # 模拟搜索过程
-        for _ in range(UAV_search_time):
+        for time in range(UAV_search_time):
             for UAV_index in range(UAV_num):
                 timer[UAV_index] -= 1
                 if timer[UAV_index] == 0:
                     # 无人机飞行一步
                     option = self.genotype[self.gene_start_index[UAV_index] + step[UAV_index]]
-                    if option.data == -1: # 右转
-                        positions[UAV_index][0] += 1
-                        positions[UAV_index][1] += 0
-                    if option.data == 0:  # 前进
-                        positions[UAV_index][0] += 1
-                        positions[UAV_index][1] += 0
-                    if option.data == 1:  # 左转
+                    if option.data == 0: # 左转
                         positions[UAV_index][0] += -1
                         positions[UAV_index][1] += 0
+                    elif option.data == 1:  # 前进
+                        positions[UAV_index][0] += 0
+                        positions[UAV_index][1] += 1
+                    elif option.data == 2:  # 右转
+                        positions[UAV_index][0] += 1
+                        positions[UAV_index][1] += 0
+                    elif option.data == 3:  # 后退
+                        positions[UAV_index][0] += 0
+                        positions[UAV_index][1] += -1 
                     # 重置计时器
                     timer[UAV_index] = UAV_search_cost[UAV_index]
-            self.fittness = update_map()
+            self.fittness = update_map(time)
+            if self.fittness < 0:
+                return
+    
+        if debug == True:
+            print(f"map: ({self.fittness:.3f})")
+            for i in range(map_vist.shape[0]):
+                print(map_vist[i])
