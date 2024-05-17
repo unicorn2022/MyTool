@@ -32,7 +32,7 @@ class Gene:
         return
     
     def __str__(self) -> str:
-        return f"{self.data:4d}, "
+        return f"{self.data:2d}, "
 
     def mutation(self):
         '''基因突变'''
@@ -62,6 +62,7 @@ class Individual:
             for i in range(UAV_num):
                 self.gene_start_index.append(self.gene_count)
                 self.gene_count += UAV_search_time // UAV_search_cost[i]
+            self.gene_start_index.append(self.gene_count)
             self.genotype = [Gene() for _ in range(self.gene_count)]
         # 父母不为空, 基因重组
         else:
@@ -83,8 +84,11 @@ class Individual:
 
     def __str__(self) -> str:
         res = "["
-        for gene in self.genotype:
-            res += gene.__str__()
+        for UAV_index in range(UAV_num):
+            res += "["
+            for i in range(self.gene_start_index[UAV_index], self.gene_start_index[UAV_index + 1]):
+                res += self.genotype[i].__str__()
+            res += "], "
         res += f"], fit: {self.fittness:4.3f}"
         return res
 
