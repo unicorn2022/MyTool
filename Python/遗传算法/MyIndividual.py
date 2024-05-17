@@ -136,7 +136,6 @@ class Individual:
                 return False
             if position[1] < 0 or position[1] >= map_height:
                 return False
-            print(position)
             if map_time[position[0]][position[1]] == -1:
                 return False
             return True
