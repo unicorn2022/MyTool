@@ -1,0 +1,8 @@
+{
+    "Genetic_Algorithm_Config" : {
+        "epochs" : 100,
+        "gene_count" : 10,
+        "individual_count" : 100,
+        "mutation_prob" : 0.01
+    }
+}
