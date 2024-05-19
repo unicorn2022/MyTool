@@ -1,0 +1,123 @@
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+
+class MapUtils:
+    def __init__(self, width:int, height:int, safe_distance:float, rand_weight:bool):
+        '''
+        :param width: 地图宽度
+        :param height: 地图高度
+        :param safe_distance: 安全距离
+        :param rand_weight: 是否随机权重
+        '''
+        self.width = width
+        self.height = height
+        self.safe_distance = safe_distance
+        # 物资权重
+        if rand_weight == True:
+            self.map_weight = np.random.random((width, height))
+        else:
+            self.map_weight = np.ones((width, height))
+        # 飞行时间
+        self.map_time = np.zeros((width, height), dtype=int)
+        for i in range(width):
+            for j in range(height):
+                self.map_time[i][j] = np.random.randint(1, 5)
+                if np.random.rand() < 0.1:
+                    self.map_time[i][j] = -1
+        return
+
+    def check_position(self, UAV_position:np.array) -> bool:
+        '''判断单个无人机位置是否合法:
+        :param UAV_position: 无人机位置
+        :return True表示合法, False表示不合法
+        '''
+        if UAV_position[0] < 0 or UAV_position[0] >= self.width:
+            return False
+        if UAV_position[1] < 0 or UAV_position[1] >= self.height:
+            return False
+        if self.map_time[UAV_position[0]][UAV_position[1]] == -1:
+            return False
+        return True
+    
+    def check_collision(self, UAV_positions:np.array) -> bool:
+        '''判断无人机是否会相撞:
+        :param UAV_positions: 多个无人机的位置
+        :return True表示合法, False表示不合法
+        '''
+        for i in range(len(UAV_positions)):
+            for j in range(i):
+                if math.dist(UAV_positions[i], UAV_positions[j]) < self.safe_distance:
+                    return False
+        return True
+    
+    def clear_map(self):
+        self.map_visit = np.zeros((self.width, self.height), dtype=int)
+        self.map_record = np.zeros((self.width, self.height), dtype=int)
+        self.total_weight = 0
+        return
+
+    def update_map(self, UAV_positions:np.array, UAV_search_radius:np.array) -> float:
+        '''更新
+        :param UAV_positions: 无人机当前位置
+        :param UAV_search_radius: 无人机搜索半径
+        :return 搜索过的所有位置的权重和, 如果不合法则返回-1
+        '''
+        if self.check_collision(UAV_positions) == False:
+            return -1
+        for index in range(len(UAV_positions)):
+            position = UAV_positions[index]
+            if self.check_position(position) == False:
+                return -1
+            search_radius = UAV_search_radius[index]
+            for i in range(max(0, position[0] - search_radius), min(self.width, position[0] + search_radius)):
+                for j in range(max(0, position[1] - search_radius), min(self.height, position[1] + search_radius)):
+                    if self.map_visit[i][j] == 1:
+                        continue
+                    if math.dist([i, j], position) <= search_radius:
+                        self.map_visit[i][j] = 1
+                        self.total_weight += self.map_weight[i][j]
+                        self.map_record[i][j] = index
+        return self.total_weight
+
+    def get_map_time(self, target_position:np.array) -> int:
+        '''获取到达地图某个位置所需的飞行时间
+        :param target_position: 目标位置
+        :return 飞行时间
+        '''
+        if self.check_position(target_position) == False:
+            return 1e10
+        return self.map_time[target_position[0]][target_position[1]]
+
+    def get_legal_direction(self, UAV_position:np.array) -> list:
+        '''获取当前位置下的合法前进方向
+        :param UAV_position 无人机当前位置
+        return 合法的位置集合
+        '''
+        direction = []
+        if self.check_position(UAV_position + np.array([-1,  0])):
+            direction.append("L")
+        if self.check_position(UAV_position + np.array([ 1,  0])):
+            direction.append("R")
+        if self.check_position(UAV_position + np.array([ 0,  1])):
+            direction.append("U")
+        if self.check_position(UAV_position + np.array([ 0, -1])):
+            direction.append("D")
+        if len(direction) == 0:
+            direction.append("P")
+        return direction
+
+    def debug(self, epoch:int):
+        # 飞机位置
+        plt.imshow(self.map_record, cmap='gray')
+        plt.savefig(f"log/epoch_{epoch:02d}_飞机位置.jpg")
+        # 飞机搜索位置
+        plt.imshow(self.map_visit, cmap='gray')
+        plt.savefig(f"log/epoch_{epoch:02d}_飞机搜索位置.jpg")
+        # 地图到达时间
+        plt.imshow(self.map_time, cmap='gray')
+        plt.savefig(f"log/epoch_{epoch:02d}_地图到达时间.jpg")
+        # 地图权重 
+        plt.imshow(self.map_weight, cmap='gray')
+        plt.savefig(f"log/epoch_{epoch:02d}_地图权重.jpg")
+            

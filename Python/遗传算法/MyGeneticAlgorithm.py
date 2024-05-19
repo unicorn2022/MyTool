@@ -39,6 +39,6 @@ class GeneticAlgorithm:
 
     def debug_fittness(self):
         for index, individual in enumerate(self.individual_list):
-            print(f"No.{index:02d}: {individual.__str__()}")
+            print(f"No.{index:02d}: {individual.__str__(True)}")
         return
     
