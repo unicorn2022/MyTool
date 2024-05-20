@@ -36,7 +36,8 @@ class Gene:
         if data != None:
             self.data = data
         else:
-            self.data = map_utils.get_random_direction(position, last_direction)
+            self.data = map_utils.init_individual_get_direction(position, last_direction)
+
         return
     
     def __str__(self) -> str:
@@ -105,8 +106,13 @@ class Individual:
             self.gene_start_index.append(self.gene_count)
             self.gene_count += UAV_search_time
             position = UAV_start_position[index]
+            search_radius = UAV_search_radius[index]
+            # 初始化 map_utils
             last_direction = None
+            self.map_utils.init_individual_setup()
+            # 生成基因
             for time in range(UAV_search_time):
+                self.map_utils.init_individual_update_map(position, search_radius)
                 gene = Gene(position=position, map_utils=self.map_utils, last_direction=last_direction)
                 self.genotype.append(gene)
                 last_direction = gene.data

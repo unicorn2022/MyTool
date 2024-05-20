@@ -62,6 +62,58 @@ class MapUtils:
                     self.map_time[i][j] = 1
 
         return
+    
+    def init_individual_setup(self):
+        # 生成个体时使用
+        self.map_weight_for_init = self.map_weight
+        return
+    
+    def init_individual_update_map(self, position:np.array, search_radius:float):
+        '''更新未搜索的地图权重
+        :param position 无人机位置
+        :param search_radius 无人机半径
+        '''
+        for i in range(max(0, position[0] - search_radius - 1), min(self.width, position[0] + search_radius + 1)):
+            for j in range(max(0, position[1] - search_radius - 1), min(self.height, position[1] + search_radius + 1)):
+                if math.dist([i, j], position) <= search_radius:
+                    self.map_weight_for_init[i][j] = 0
+        return
+    
+    def init_individual_get_direction(self, UAV_position:np.array, last_direction:str) -> str:
+        '''获取当前位置下的合法前进方向的随机一个
+        :param UAV_position 无人机当前位置
+        :param last_direction 无人机上一次的飞行方向
+        return 合法的位置集合
+        '''
+        direction = []
+        total_weight = []
+        # 左
+        if last_direction != "R" and self.check_position(UAV_position + np.array([-1,  0])):
+            direction.append("L")
+            total_weight.append(sum(sum(self.map_weight_for_init[0:UAV_position[0], 0:])))
+        # 右
+        if last_direction != "L" and self.check_position(UAV_position + np.array([ 1,  0])):
+            direction.append("R")
+            total_weight.append(sum(sum(self.map_weight_for_init[UAV_position[0]+1:, 0:])))
+        # 上
+        if last_direction != "D" and self.check_position(UAV_position + np.array([ 0,  1])):
+            direction.append("U")
+            total_weight.append(sum(sum(self.map_weight_for_init[0:, UAV_position[1]+1:])))
+        # 下
+        if last_direction != "U" and self.check_position(UAV_position + np.array([ 0, -1])):
+            direction.append("D")
+            total_weight.append(sum(sum(self.map_weight_for_init[0:, 0:UAV_position[1]])))
+        
+        # 有可前进方向, 根据权重随机选择
+        if len(direction) != 0:
+            total_weight /= sum(total_weight)
+            temp = random.uniform(0.0, 1.0)
+            for i in range(len(direction)):
+                if temp - total_weight[i] <= 0:
+                    return direction[i]
+                temp -= total_weight[i]
+        return "P"
+
 
     def check_position(self, UAV_position:np.array) -> bool:
         '''判断单个无人机位置是否合法:
@@ -126,43 +178,6 @@ class MapUtils:
         if self.check_position(target_position) == False:
             return 1e10
         return self.map_time[target_position[0]][target_position[1]]
-
-    def get_random_direction(self, UAV_position:np.array, last_direction:str) -> str:
-        '''获取当前位置下的合法前进方向的随机一个
-        :param UAV_position 无人机当前位置
-        return 合法的位置集合
-        '''
-        direction = []
-        total_weight = []
-        # 左
-        if last_direction != "R" and self.check_position(UAV_position + np.array([-1,  0])):
-            direction.append("L")
-            total_weight.append(sum(sum(self.map_weight[0:UAV_position[0], 0:])))
-        # 右
-        if last_direction != "L" and self.check_position(UAV_position + np.array([ 1,  0])):
-            direction.append("R")
-            total_weight.append(sum(sum(self.map_weight[UAV_position[0]+1:, 0:])))
-        # 上
-        if last_direction != "D" and self.check_position(UAV_position + np.array([ 0,  1])):
-            direction.append("U")
-            total_weight.append(sum(sum(self.map_weight[0:, UAV_position[1]+1:])))
-        # 下
-        if last_direction != "U" and self.check_position(UAV_position + np.array([ 0, -1])):
-            direction.append("D")
-            total_weight.append(sum(sum(self.map_weight[0:, 0:UAV_position[1]])))
-        
-        # 没有可前进方向
-        if len(direction) == 0:
-            direction.append("P")
-        # 有可前进方向
-        else:
-            total_weight /= sum(total_weight)
-            temp = random.uniform(0.0, 1.0)
-            for i in range(len(direction)):
-                if temp - total_weight[i] <= 0:
-                    return direction[i]
-                temp -= total_weight[i]
-        return "P"
 
     def debug(self, epoch:int, fittness:float):
         img = np.zeros((self.width, self.height, 3))
