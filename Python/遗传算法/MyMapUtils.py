@@ -17,10 +17,34 @@ class MapUtils:
         self.height = height
         self.safe_distance = safe_distance
         # 物资权重
-        if rand_weight == True:
-            self.map_weight = np.random.random((width, height))
-        else:
-            self.map_weight = np.ones((width, height))
+        self.map_weight = np.ones((width, height))
+        for i in range(width):
+            for j in range(height):
+                if rand_weight == True:
+                    self.map_weight[i][j] = random.uniform(0, 1)
+                else:
+                    # self.map_weight[i][j] = random.randint(0, 1)
+                    if i == 3 and j in range(10, 21):
+                        self.map_weight[i][j] = 1
+                    elif i == 4 and j in range(2, 26):
+                        self.map_weight[i][j] = 1
+                    elif i == 5 and j in range(2, 41):
+                        self.map_weight[i][j] = 1
+                    elif i in range(6, 20) and j in range(2, 46):
+                        self.map_weight[i][j] = 1
+                    elif i in range(20, 26) and j in range(10, 46):
+                        self.map_weight[i][j] = 1
+                    elif i in range(26, 36) and j in range(5, 36):
+                        self.map_weight[i][j] = 1
+                    elif i in range(36, 45) and j in range(2, 46):
+                        self.map_weight[i][j] = 1
+                    elif i in range(45, 48) and j in range(5, 35):
+                        self.map_weight[i][j] = 1
+                    elif i == 48 and j in range(10, 16):
+                        self.map_weight[i][j] = 1
+                    else:
+                        self.map_weight[i][j] = 0
+
         # 飞行时间
         self.map_time = np.zeros((width, height), dtype=int)
         for i in range(width):
@@ -28,13 +52,15 @@ class MapUtils:
                 # self.map_time[i][j] = np.random.randint(1, 5)
                 # if np.random.rand() < 0.1:
                 #     self.map_time[i][j] = -1
-                self.map_time[i][j] = 2
-                if i in range(8, 12) and j in range(10, 15):
+                if i in range(8, 13) and j in range(10, 16):
                     self.map_time[i][j] = -1
-                if i in range(10, 20) and j in range(20, 30):
+                elif i in range(30, 36) and j in range(25, 31):
                     self.map_time[i][j] = -1
-                if i in range(30, 35) and j in range(25, 30):
-                    self.map_time[i][j] = -1
+                elif i in range(10, 16) and j in range(10, 26):
+                    self.map_time[i][j] = 2
+                else:
+                    self.map_time[i][j] = 1
+
         return
 
     def check_position(self, UAV_position:np.array) -> bool:
@@ -84,6 +110,8 @@ class MapUtils:
             for i in range(max(0, position[0] - search_radius - 1), min(self.width, position[0] + search_radius + 1)):
                 for j in range(max(0, position[1] - search_radius - 1), min(self.height, position[1] + search_radius + 1)):
                     if self.map_visit[i][j] == 1:
+                        continue
+                    if self.map_time[i][j] == -1:
                         continue
                     if math.dist([i, j], position) <= search_radius:
                         self.map_visit[i][j] = 1
@@ -140,8 +168,14 @@ class MapUtils:
         img = np.zeros((self.width, self.height, 3))
         for i in range(self.width):
             for j in range(self.height):
-                # 地图时间: blue
-                img[i][j] = self.map_time[i][j] * np.array([0, 0, 1])
+                # 地图权重: blue
+                if self.map_weight[i][j] == 0:
+                    img[i][j] = np.array([1, 1, 1])
+                else:
+                    img[i][j] = self.map_weight[i][j] * np.array([0, 0.25, 0.5])
+                # 地图时间: black
+                if self.map_time[i][j] == -1:
+                    img[i][j] = np.array([0, 0, 0]) 
                 # 飞机搜索位置: green
                 if self.map_visit[i][j] != 0:
                     img[i][j] = np.array([0, 1, 0])
