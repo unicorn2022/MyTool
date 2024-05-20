@@ -25,8 +25,15 @@ class MapUtils:
         self.map_time = np.zeros((width, height), dtype=int)
         for i in range(width):
             for j in range(height):
-                self.map_time[i][j] = np.random.randint(1, 5)
-                if np.random.rand() < 0.1:
+                # self.map_time[i][j] = np.random.randint(1, 5)
+                # if np.random.rand() < 0.1:
+                #     self.map_time[i][j] = -1
+                self.map_time[i][j] = 2
+                if i in range(8, 12) and j in range(10, 15):
+                    self.map_time[i][j] = -1
+                if i in range(10, 20) and j in range(20, 30):
+                    self.map_time[i][j] = -1
+                if i in range(30, 35) and j in range(25, 30):
                     self.map_time[i][j] = -1
         return
 
@@ -133,8 +140,8 @@ class MapUtils:
         img = np.zeros((self.width, self.height, 3))
         for i in range(self.width):
             for j in range(self.height):
-                # 地图权重: blue
-                img[i][j] = self.map_weight[i][j] * np.array([0, 0, 1])
+                # 地图时间: blue
+                img[i][j] = self.map_time[i][j] * np.array([0, 0, 1])
                 # 飞机搜索位置: green
                 if self.map_visit[i][j] != 0:
                     img[i][j] = np.array([0, 1, 0])

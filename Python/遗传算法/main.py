@@ -30,7 +30,7 @@ if __name__ == '__main__':
         print(f"epoch: {epoch+1}/{epochs}")
         solution.reproduce()
         individual = solution.get_best_individual()
-        process_bar.desc = f"繁殖代数[{epoch + 1}/{epochs}], 最优个体为: {individual.__str__()}"
+        process_bar.desc = f"繁殖代数[{epoch + 1:03d}/{epochs}], 当前最优个体适应性为 {individual.fittness:.4f}"
         # 调试信息
         solution.debug_fittness()
         individual.debug_fittness(epoch)

@@ -12,12 +12,12 @@ class GeneticAlgorithm:
         self.individual_list = []
         process_bar = tqdm(range(self.individual_count))
         best_fittness = -1e10
-        for _ in process_bar:
+        for index in process_bar:
             individual = Individual(mutation_prob=mutation_prob)
             self.individual_list.append(individual)
             if individual.fittness > best_fittness:
                 best_fittness = individual.fittness
-            process_bar.desc = f"创建初始个体, 当前最优个体适应性为{best_fittness:.4f}"
+            process_bar.desc = f"创建个体[{index+1:03d}/{self.individual_count}], 当前最优个体适应性为 {best_fittness:.4f}"
         self.mutation_prob = mutation_prob
         return
 
@@ -43,7 +43,7 @@ class GeneticAlgorithm:
         self.individual_list = self.individual_list[self.individual_count:]
         return
 
-    def get_best_individual(self):
+    def get_best_individual(self) -> Individual:
         return self.individual_list[-1]
 
     def debug_fittness(self):
