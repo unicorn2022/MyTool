@@ -1,4 +1,5 @@
 from MyIndividual import Individual
+from tqdm import tqdm
 
 class GeneticAlgorithm:
     def __init__(self, individual_count:int, mutation_prob:float):
@@ -8,7 +9,15 @@ class GeneticAlgorithm:
         '''
         # 创建初始解集
         self.individual_count = individual_count
-        self.individual_list = [Individual(mutation_prob=mutation_prob) for _ in range(self.individual_count)]
+        self.individual_list = []
+        process_bar = tqdm(range(self.individual_count))
+        best_fittness = -1e10
+        for _ in process_bar:
+            individual = Individual(mutation_prob=mutation_prob)
+            self.individual_list.append(individual)
+            if individual.fittness > best_fittness:
+                best_fittness = individual.fittness
+            process_bar.desc = f"创建初始个体, 当前最优个体适应性为{best_fittness:.4f}"
         self.mutation_prob = mutation_prob
         return
 

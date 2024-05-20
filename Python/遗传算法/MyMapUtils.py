@@ -1,6 +1,9 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import pyexr
+import random
+import sys
 
 class MapUtils:
     def __init__(self, width:int, height:int, safe_distance:float, rand_weight:bool):
@@ -69,15 +72,15 @@ class MapUtils:
             position = UAV_positions[index]
             if self.check_position(position) == False:
                 return -1
+            self.map_record[position[0]][position[1]] = index + 1
             search_radius = UAV_search_radius[index]
-            for i in range(max(0, position[0] - search_radius), min(self.width, position[0] + search_radius)):
-                for j in range(max(0, position[1] - search_radius), min(self.height, position[1] + search_radius)):
+            for i in range(max(0, position[0] - search_radius - 1), min(self.width, position[0] + search_radius + 1)):
+                for j in range(max(0, position[1] - search_radius - 1), min(self.height, position[1] + search_radius + 1)):
                     if self.map_visit[i][j] == 1:
                         continue
                     if math.dist([i, j], position) <= search_radius:
                         self.map_visit[i][j] = 1
                         self.total_weight += self.map_weight[i][j]
-                        self.map_record[i][j] = index
         return self.total_weight
 
     def get_map_time(self, target_position:np.array) -> int:
@@ -89,35 +92,67 @@ class MapUtils:
             return 1e10
         return self.map_time[target_position[0]][target_position[1]]
 
-    def get_legal_direction(self, UAV_position:np.array) -> list:
-        '''获取当前位置下的合法前进方向
+    def get_random_direction(self, UAV_position:np.array, last_direction:str) -> str:
+        '''获取当前位置下的合法前进方向的随机一个
         :param UAV_position 无人机当前位置
         return 合法的位置集合
         '''
         direction = []
-        if self.check_position(UAV_position + np.array([-1,  0])):
+        total_weight = []
+        # 左
+        if last_direction != "R" and self.check_position(UAV_position + np.array([-1,  0])):
             direction.append("L")
-        if self.check_position(UAV_position + np.array([ 1,  0])):
+            total_weight.append(sum(sum(self.map_weight[0:UAV_position[0], 0:])))
+        # 右
+        if last_direction != "L" and self.check_position(UAV_position + np.array([ 1,  0])):
             direction.append("R")
-        if self.check_position(UAV_position + np.array([ 0,  1])):
+            total_weight.append(sum(sum(self.map_weight[UAV_position[0]+1:, 0:])))
+        # 上
+        if last_direction != "D" and self.check_position(UAV_position + np.array([ 0,  1])):
             direction.append("U")
-        if self.check_position(UAV_position + np.array([ 0, -1])):
+            total_weight.append(sum(sum(self.map_weight[0:, UAV_position[1]+1:])))
+        # 下
+        if last_direction != "U" and self.check_position(UAV_position + np.array([ 0, -1])):
             direction.append("D")
+            total_weight.append(sum(sum(self.map_weight[0:, 0:UAV_position[1]])))
+        
+        # 没有可前进方向
         if len(direction) == 0:
             direction.append("P")
-        return direction
+        # 有可前进方向
+        else:
+            total_weight /= sum(total_weight)
+            temp = random.uniform(0.0, 1.0)
+            for i in range(len(direction)):
+                if temp - total_weight[i] <= 0:
+                    return direction[i]
+                temp -= total_weight[i]
+        return "P"
 
     def debug(self, epoch:int):
-        # 飞机位置
-        plt.imshow(self.map_record, cmap='gray')
-        plt.savefig(f"log/epoch_{epoch:02d}_飞机位置.jpg")
-        # 飞机搜索位置
-        plt.imshow(self.map_visit, cmap='gray')
-        plt.savefig(f"log/epoch_{epoch:02d}_飞机搜索位置.jpg")
-        # 地图到达时间
-        plt.imshow(self.map_time, cmap='gray')
-        plt.savefig(f"log/epoch_{epoch:02d}_地图到达时间.jpg")
-        # 地图权重 
-        plt.imshow(self.map_weight, cmap='gray')
-        plt.savefig(f"log/epoch_{epoch:02d}_地图权重.jpg")
+        img = np.zeros((self.width, self.height, 3))
+        for i in range(self.width):
+            for j in range(self.height):
+                # 地图权重: blue
+                img[i][j] = self.map_weight[i][j] * np.array([0, 0, 1])
+                # 飞机搜索位置: green
+                if self.map_visit[i][j] != 0:
+                    img[i][j] = np.array([0, 1, 0])
+                # 飞机位置: red
+                if self.map_record[i][j] != 0:
+                    img[i][j] = np.array([1, 0, 0])
+        pyexr.write(f"log/epoch_{epoch:02d}.exr", img)
+        # # 飞机位置
+        # plt.imshow(self.map_record, cmap='gray')
+        # plt.savefig(f"log/epoch_{epoch:02d}_飞机位置.jpg")
+        # # 飞机搜索位置
+        # plt.imshow(self.map_visit, cmap='gray')
+        # plt.savefig(f"log/epoch_{epoch:02d}_飞机搜索位置.jpg")
+        # # 地图到达时间
+        # plt.imshow(self.map_time, cmap='gray')
+        # plt.savefig(f"log/epoch_{epoch:02d}_地图到达时间.jpg")
+        # # 地图权重 
+        # plt.imshow(self.map_weight, cmap='gray')
+        # plt.savefig(f"log/epoch_{epoch:02d}_地图权重.jpg")
+        return
             

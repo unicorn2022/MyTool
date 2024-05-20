@@ -27,7 +27,7 @@ UAV_search_radius = UAV_config["search_radius"]
 UAV_start_position = UAV_config["start_position"]
 
 class Gene:
-    def __init__(self, data:str=None, position:np.array=None, map_utils:MapUtils=None):
+    def __init__(self, data:str=None, position:np.array=None, map_utils:MapUtils=None, last_direction:str=None):
         '''基因
         :param data: 基因携带的信息
         :param position: 无人机当前位置
@@ -36,7 +36,7 @@ class Gene:
         if data != None:
             self.data = data
         else:
-            self.data = random.choice(map_utils.get_legal_direction(position))
+            self.data = map_utils.get_random_direction(position, last_direction)
         return
     
     def __str__(self) -> str:
@@ -44,7 +44,7 @@ class Gene:
 
     def mutation(self):
         '''基因突变'''
-        self.data = random.choice(list(direction.keys()))
+        self.data = random.choice(["L", "R", "U", "D"])
         return
 
     def get_direction(self):
@@ -105,9 +105,11 @@ class Individual:
             self.gene_start_index.append(self.gene_count)
             self.gene_count += UAV_search_time
             position = UAV_start_position[index]
+            last_direction = None
             for time in range(UAV_search_time):
-                gene = Gene(position=position, map_utils=self.map_utils)
+                gene = Gene(position=position, map_utils=self.map_utils, last_direction=last_direction)
                 self.genotype.append(gene)
+                last_direction = gene.data
                 position += gene.get_direction()
         self.gene_start_index.append(self.gene_count)            
         # 计算个体适应性
@@ -165,7 +167,8 @@ class Individual:
             # 更新地图
             self.fittness = self.map_utils.update_map(UAV_positions, UAV_search_radius)
             if self.fittness < 0:
-                return time - UAV_search_time
+                self.fittness = time - UAV_search_time
+                return
                    
     def debug_fittness(self, epoch:int):
         self.map_utils.debug(epoch)
