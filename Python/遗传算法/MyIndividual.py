@@ -171,4 +171,4 @@ class Individual:
                 return
                    
     def debug_fittness(self, epoch:int):
-        self.map_utils.debug(epoch)
+        self.map_utils.debug(epoch, self.fittness)

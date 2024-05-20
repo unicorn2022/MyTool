@@ -8,13 +8,13 @@
 
     "UAV_Config":{
         "num": 4,
-        "search_time": 50,
-        "search_radius": [1, 2, 3, 4],
+        "search_time": 10,
+        "search_radius": [2, 2, 2, 2],
         "start_position": [
-            [0, 0],
-            [0, 49],
-            [49, 0],
-            [49, 49]
+            [0, 5],
+            [0, 10],
+            [0, 15],
+            [0, 20]
         ]
     },
 

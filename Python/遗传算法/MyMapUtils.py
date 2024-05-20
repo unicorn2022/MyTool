@@ -136,7 +136,7 @@ class MapUtils:
                 temp -= total_weight[i]
         return "P"
 
-    def debug(self, epoch:int):
+    def debug(self, epoch:int, fittness:float):
         img = np.zeros((self.width, self.height, 3))
         for i in range(self.width):
             for j in range(self.height):
@@ -148,7 +148,7 @@ class MapUtils:
                 # 飞机位置: red
                 if self.map_record[i][j] != 0:
                     img[i][j] = np.array([1, 0, 0])
-        pyexr.write(f"log/epoch_{epoch:02d}.exr", img)
+        pyexr.write(f"log/epoch_{epoch:02d}_fit_{fittness:.4f}.exr", img)
         # # 飞机位置
         # plt.imshow(self.map_record, cmap='gray')
         # plt.savefig(f"log/epoch_{epoch:02d}_飞机位置.jpg")
