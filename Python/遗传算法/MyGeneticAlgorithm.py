@@ -7,18 +7,20 @@ class GeneticAlgorithm:
         :param individual_count: 种群个体数目
         :param mutation_prob: 基因突变概率
         '''
-        # 创建初始解集
         self.individual_count = individual_count
         self.individual_list = []
+        # 创建初始解集
         process_bar = tqdm(range(self.individual_count))
         best_fittness = -1e10
         for index in process_bar:
+            # 初始化个体
             individual = Individual(mutation_prob=mutation_prob)
             self.individual_list.append(individual)
+            # 记录最优个体
             if individual.fittness > best_fittness:
                 best_fittness = individual.fittness
+            # 日志信息
             process_bar.desc = f"创建个体[{index+1:03d}/{self.individual_count}], 当前最优个体适应性为 {best_fittness:.4f}"
-        self.mutation_prob = mutation_prob
         return
 
     

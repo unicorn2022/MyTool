@@ -14,24 +14,30 @@ def clear_dir(dir:str):
     return None
 
 if __name__ == '__main__':
-    clear_dir("./log")
+    # 读入算法设置
     file = open("config.json", "r")
     config = json.load(file)
     file.close()
+    Genetic_Algorithm_Config = config["Genetic_Algorithm_Config"]
+    epochs = Genetic_Algorithm_Config["epochs"]
+    individual_count = Genetic_Algorithm_Config["individual_count"]
+    mutation_prob = Genetic_Algorithm_Config["mutation_prob"]
 
+    # 日志文件
+    clear_dir("./log")
     log_file = open("temp.txt", "w")
     sys.stdout = log_file
 
-    Genetic_Algorithm_Config = config["Genetic_Algorithm_Config"]
-    solution = GeneticAlgorithm(Genetic_Algorithm_Config["individual_count"], Genetic_Algorithm_Config["mutation_prob"])
-    epochs = Genetic_Algorithm_Config["epochs"]
+    # 遗传算法
+    solution = GeneticAlgorithm(individual_count, mutation_prob)
     process_bar = tqdm(range(epochs))
     for epoch in process_bar:
-        print(f"epoch: {epoch+1}/{epochs}")
+        # 繁殖一代, 并记录最优个体
         solution.reproduce()
         individual = solution.get_best_individual()
         process_bar.desc = f"繁殖代数[{epoch + 1:03d}/{epochs}], 当前最优个体适应性为 {individual.fittness:.4f}"
         # 调试信息
+        print(f"epoch: {epoch+1}/{epochs}")
         solution.debug_fittness()
-        individual.debug_fittness(epoch)
+        individual.debug(epoch)
         

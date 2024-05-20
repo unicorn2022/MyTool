@@ -63,13 +63,15 @@ class MapUtils:
 
         return
     
+    '''初始化个体相关函数'''
     def init_individual_setup(self):
+        '''初始化个体: setup'''
         # 生成个体时使用
         self.map_weight_for_init = self.map_weight
         return
     
     def init_individual_update_map(self, position:np.array, search_radius:float):
-        '''更新未搜索的地图权重
+        '''初始化个体: 更新未搜索的地图权重
         :param position 无人机位置
         :param search_radius 无人机半径
         '''
@@ -80,7 +82,7 @@ class MapUtils:
         return
     
     def init_individual_get_direction(self, UAV_position:np.array, last_direction:str) -> str:
-        '''获取当前位置下的合法前进方向的随机一个
+        '''初始化个体: 获取当前位置下的合法前进方向的随机一个
         :param UAV_position 无人机当前位置
         :param last_direction 无人机上一次的飞行方向
         return 合法的位置集合
@@ -115,6 +117,7 @@ class MapUtils:
         return "P"
 
 
+    '''计算适应性相关函数'''
     def check_position(self, UAV_position:np.array) -> bool:
         '''判断单个无人机位置是否合法:
         :param UAV_position: 无人机位置
@@ -179,6 +182,8 @@ class MapUtils:
             return 1e10
         return self.map_time[target_position[0]][target_position[1]]
 
+
+    '''调试相关函数'''
     def debug(self, epoch:int, fittness:float):
         img = np.zeros((self.width, self.height, 3))
         for i in range(self.width):

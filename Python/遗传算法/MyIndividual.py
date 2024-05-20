@@ -27,6 +27,9 @@ UAV_search_radius = UAV_config["search_radius"]
 UAV_start_position = UAV_config["start_position"]
 
 class Gene:
+    def __str__(self) -> str:
+        return self.data
+
     def __init__(self, data:str=None, position:np.array=None, map_utils:MapUtils=None, last_direction:str=None):
         '''基因
         :param data: 基因携带的信息
@@ -40,9 +43,6 @@ class Gene:
 
         return
     
-    def __str__(self) -> str:
-        return self.data
-
     def mutation(self):
         '''基因突变'''
         self.data = random.choice(["L", "R", "U", "D"])
@@ -51,26 +51,40 @@ class Gene:
     def get_direction(self):
         return direction[self.data]
 
-'''
-基因型定义如下: [
-    UAV_1_step_1, ... UAV_1_step_x1
-    UAV_2_step_1, ... UAV_2_step_x2
-    ...
-    UAV_n_step_n, ... UAV_n_step_xn
-]
-'''
 class Individual:
+    '''个体基因型定义如下: [
+        UAV_1_step_1, ... UAV_1_step_x1
+        UAV_2_step_1, ... UAV_2_step_x2
+        ...
+        UAV_n_step_n, ... UAV_n_step_xn
+    ]
+    '''
+    def __str__(self, detail=False) -> str:
+        res = f"fit: {self.fittness:4.3f} "
+        if detail == True:
+            for UAV_index in range(UAV_num):
+                res += f"[({UAV_start_position[UAV_index][0]}, {UAV_start_position[UAV_index][1]})"
+                for i in range(self.gene_start_index[UAV_index], self.gene_start_index[UAV_index + 1]):
+                    res += self.genotype[i].__str__()
+                res += "], "
+        return res
+
     def __init__(self, father=None, mother=None, mutation_prob:float=0.01):
+        '''种群中的个体
+        :param father: 父
+        :param mother: 母
+        :param mutation_prob: 基因突变的概率
+        '''
         if father == None and mother == None:
-            self.create_random(mutation_prob)
+            self.create_by_random(mutation_prob)
         else:
             self.create_by_parent(father, mother)
         return
 
     def create_by_parent(self, father, mother):
-        '''个体
-        :param father: 父代
-        :param mother: 母代
+        '''父母 => 子代
+        :param father: 父
+        :param mother: 母
         '''
         self.map_utils = MapUtils(map_width, map_height, safe_distance, rand_weight)
         self.mutation_prob = father.mutation_prob
@@ -89,13 +103,11 @@ class Individual:
         self.calc_fittness()
         return
 
-    def create_random(self, mutation_prob:float):
-        '''个体
-        :param gene_count: 一个个体包含的基因个数
+    def create_by_random(self, mutation_prob:float):
+        '''初始个体
         :param mutation_prob: 基因突变的概率
         '''
         self.map_utils = MapUtils(map_width, map_height, safe_distance, rand_weight)
-        # 随机初始化
         self.mutation_prob = mutation_prob
         # 初始化基因型
         self.genotype = []
@@ -122,16 +134,6 @@ class Individual:
         self.calc_fittness()
         return
     
-    def __str__(self, detail=False) -> str:
-        res = f"fit: {self.fittness:4.3f} "
-        if detail == True:
-            for UAV_index in range(UAV_num):
-                res += f"[({UAV_start_position[UAV_index][0]}, {UAV_start_position[UAV_index][1]})"
-                for i in range(self.gene_start_index[UAV_index], self.gene_start_index[UAV_index + 1]):
-                    res += self.genotype[i].__str__()
-                res += "], "
-        return res
-
     def mutation(self):
         '''基因突变'''
         if random.uniform(0, 1) > self.mutation_prob:
@@ -176,5 +178,6 @@ class Individual:
                 self.fittness = time - UAV_search_time
                 return
                    
-    def debug_fittness(self, epoch:int):
+    def debug(self, epoch:int):
+        '''调试'''
         self.map_utils.debug(epoch, self.fittness)
